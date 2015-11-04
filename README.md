@@ -13,6 +13,6 @@ repositories {
 }
 
 dependencies {
-  compile 'io.drakon:flightpath:0.0.1'
+  compile 'io.drakon:flightpath:0.0.2'
 }
 ```
