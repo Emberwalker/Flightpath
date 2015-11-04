@@ -16,7 +16,7 @@ import java.util.Set;
  * @author Arkan <arkan@drakon.io>
  */
 @ParametersAreNonnullByDefault
-@SuppressWarnings("unused")
+@SuppressWarnings({"unused","unchecked"})
 public class Flightpath {
 
     private final ISubscriberLocator locator;
@@ -79,15 +79,18 @@ public class Flightpath {
     public void post(Object evt) {
         synchronized (lock) {
             for (Map.Entry<Object, Map<Class, Set<Method>>> ent : subscribers.entrySet()) {
-                Set<Method> ms = ent.getValue().getOrDefault(evt.getClass(), new HashSet<Method>());
-                for (Method m : ms) {
-                    try {
-                        boolean access = m.isAccessible();
-                        m.setAccessible(true);
-                        m.invoke(ent.getKey(), evt);
-                        m.setAccessible(access);
-                    } catch (Exception ex) {
-                        exceptionHandler.handle(ex);
+                for (Map.Entry<Class, Set<Method>> objEnt: ent.getValue().entrySet()) {
+                    if (!objEnt.getKey().isAssignableFrom(evt.getClass())) continue;
+                    Set<Method> ms = objEnt.getValue();
+                    for (Method m : ms) {
+                        try {
+                            boolean access = m.isAccessible();
+                            m.setAccessible(true);
+                            m.invoke(ent.getKey(), evt);
+                            m.setAccessible(access);
+                        } catch (Exception ex) {
+                            exceptionHandler.handle(ex);
+                        }
                     }
                 }
             }
