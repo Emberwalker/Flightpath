@@ -19,6 +19,7 @@
 *.iml
 *.ipr
 *.iws
+/.idea/
 
 # General test run stuff
 /run/
