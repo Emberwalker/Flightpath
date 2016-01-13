@@ -22,8 +22,9 @@ public class AnnotationLocator implements ISubscriberLocator {
         this.annotation = annotation;
     }
 
+    @Nonnull
     @Override
-    public @Nonnull Map<Class, Set<Method>> findSubscribers(Object obj) {
+    public Map<Class, Set<Method>> findSubscribers(Object obj) {
         Map<Class, Set<Method>> methods = new HashMap<Class, Set<Method>>();
         for (Method m : obj.getClass().getMethods()) {
             if (m.isAnnotationPresent(annotation) && m.getParameterTypes().length == 1) {
@@ -35,4 +36,9 @@ public class AnnotationLocator implements ISubscriberLocator {
         return methods;
     }
 
+    @Nonnull
+    @Override
+    public Map<Object, Map<Class, Set<Method>>> findSubscribers() {
+        return new HashMap<Object, Map<Class, Set<Method>>>();
+    }
 }

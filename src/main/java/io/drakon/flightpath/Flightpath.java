@@ -70,6 +70,26 @@ public class Flightpath {
     }
 
     /**
+     * Requests the current locator to scan for subscribers and register all it finds. How this works is dependant
+     * on the implementation of ISubscriberLocator - it may also be a no-op.
+     */
+    public void registerAll() {
+        Map<Object, Map<Class, Set<Method>>> objs;
+        try {
+            objs = locator.findSubscribers();
+        } catch (AbstractMethodError err) {
+            // Older implementation of ISubscriberLocator without findSubscribers(); SKIP!
+            return;
+        }
+
+        synchronized (lock) {
+            for (Map.Entry<Object, Map<Class, Set<Method>>> ent : objs.entrySet()) {
+                subscribers.put(ent.getKey(), ent.getValue());
+            }
+        }
+    }
+
+    /**
      * Posts the given event on the bus.
      *
      * By default this blackholes exceptions. If you need different behaviour, see setExceptionHandler.
