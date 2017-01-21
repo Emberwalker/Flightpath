@@ -1,11 +1,11 @@
 // Flightpath - build file
 
 repositories {
-  mavenCentral()
-  maven {
-    name = 'Forge'
-    url = 'http://files.minecraftforge.net/maven'
-  }
+    mavenCentral()
+    maven {
+        name = 'Forge'
+        url = 'http://files.minecraftforge.net/maven'
+    }
 }
 
 apply plugin: 'java'
@@ -17,54 +17,55 @@ group = 'io.drakon'
 version = FLIGHTPATH_VERSION
 
 dependencies {
-  compile group:'com.google.code.findbugs', name:'jsr305', version:'1.3.9'
-  compile group:'net.minecraftforge', name:'forge', version: FORGE_VERSION, classifier:'universal'
-  compile group:'com.google.guava', name:'guava', version: '17.0' // required for ASM data table
+    compile group: 'com.google.code.findbugs', name: 'jsr305', version: '1.3.9'
+    compile group: 'net.minecraftforge', name: 'forge', version: FORGE_VERSION, classifier: 'universal'
+    compile group: 'com.google.guava', name: 'guava', version: '17.0' // required for ASM data table
+    testCompile group: 'junit', name: 'junit', version: '4.12'
 }
 
 // Disable Javadoc doclint on JVM 1.8
 if (JavaVersion.current().isJava8Compatible()) {
-  allprojects {
-    tasks.withType(Javadoc) {
-      options.addStringOption('Xdoclint:none', '-quiet')
+    allprojects {
+        tasks.withType(Javadoc) {
+            options.addStringOption('Xdoclint:none', '-quiet')
+        }
     }
-  }
 }
 
 jar {
-  manifest {
-    attributes 'Flightpath-Version': version
-  }
+    manifest {
+        attributes 'Flightpath-Version': version
+    }
 }
 
 task sourceJar(type: Jar) {
-  classifier = 'sources'
-  from sourceSets.main.allSource
+    classifier = 'sources'
+    from sourceSets.main.allSource
 }
 
 task javadocJar(type: Jar, dependsOn: javadoc) {
-  classifier = 'javadoc'
-  from javadoc.destinationDir
+    classifier = 'javadoc'
+    from javadoc.destinationDir
 }
 
 artifacts {
-  archives sourceJar
-  archives javadocJar
+    archives sourceJar
+    archives javadocJar
 }
 
 // Maven
 apply plugin: 'maven'
 
 if (!project.hasProperty("DEPLOY_DIR")) {
-  ext.DEPLOY_DIR = null
+    ext.DEPLOY_DIR = null
 }
 
 uploadArchives {
-  repositories {
-    mavenDeployer {
-      repository(url: "file://${DEPLOY_DIR}")
+    repositories {
+        mavenDeployer {
+            repository(url: "file://${DEPLOY_DIR}")
+        }
     }
-  }
 }
 
 uploadArchives.onlyIf { return DEPLOY_DIR != null }
