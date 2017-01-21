@@ -1,10 +1,11 @@
 package io.drakon.flightpath.forge;
 
-import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.SetMultimap;
 import io.drakon.flightpath.Airdrop;
 import io.drakon.flightpath.ISubscriberLocator;
 import io.drakon.flightpath.lib.AnnotationLocator;
+import io.drakon.flightpath.lib.Pair;
 import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.discovery.ASMDataTable;
 import net.minecraftforge.fml.common.discovery.ASMDataTable.ASMData;
@@ -13,7 +14,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
-import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -26,10 +27,10 @@ import java.util.Set;
  * @author Arkan <arkan@drakon.io>
  */
 @ParametersAreNonnullByDefault
+@SuppressWarnings("unused")
 public class ASMDataTableLocator implements ISubscriberLocator {
 
-    private static final Map<Object, Map<Class, Set<Method>>> NO_SUBSCRIBERS = new HashMap<Object, Map<Class,
-            Set<Method>>>();
+    private static final Set<Pair<Object, Map<Class, Set<Method>>>> NO_SUBSCRIBERS = new HashSet<Pair<Object, Map<Class, Set<Method>>>>();
 
     private AnnotationLocator innerLocator;
     private ASMDataTable asmTable;
@@ -61,15 +62,15 @@ public class ASMDataTableLocator implements ISubscriberLocator {
 
     @Nonnull
     @Override
-    public Map<Object, Map<Class, Set<Method>>> findSubscribers() {
+    public Set<Pair<Object, Map<Class, Set<Method>>>> findSubscribers() {
         SetMultimap<String, ASMData> allAnnotationsInContainer = asmTable.getAnnotationsFor(
                 Loader.instance().activeModContainer());
         if (!allAnnotationsInContainer.containsKey(ForgepathHandler.class.getCanonicalName())) return NO_SUBSCRIBERS;
         Set<ASMData> asmDataSet = allAnnotationsInContainer.get(ForgepathHandler.class.getName());
 
         // Goddamnit Java and your stupidly long types
-        ImmutableMap.Builder<Object, Map<Class, Set<Method>>> mapBuilder =
-                new ImmutableMap.Builder<Object, Map<Class, Set<Method>>>();
+        ImmutableSet.Builder<Pair<Object, Map<Class, Set<Method>>>> mapBuilder =
+                new ImmutableSet.Builder<Pair<Object, Map<Class, Set<Method>>>>();
 
         for (ASMData asmData : asmDataSet) {
             String cname = asmData.getClassName();
@@ -80,7 +81,7 @@ public class ASMDataTableLocator implements ISubscriberLocator {
                 continue; // SKIP!
             }
             Map<Class, Set<Method>> subscribers = innerLocator.findSubscribers(obj);
-            mapBuilder.put(obj, subscribers);
+            mapBuilder.add(new Pair<Object, Map<Class, Set<Method>>>(obj, subscribers));
         }
 
         return mapBuilder.build();

@@ -2,6 +2,7 @@ package io.drakon.flightpath.test.locator;
 
 import io.drakon.flightpath.Airdrop;
 import io.drakon.flightpath.lib.AnnotationLocator;
+import io.drakon.flightpath.test.DummyEvent;
 import org.junit.Test;
 
 import static org.junit.Assert.*;

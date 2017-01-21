@@ -38,7 +38,7 @@ public class AnnotationLocator implements ISubscriberLocator {
 
     @Nonnull
     @Override
-    public Map<Object, Map<Class, Set<Method>>> findSubscribers() {
-        return new HashMap<Object, Map<Class, Set<Method>>>();
+    public Set<Pair<Object, Map<Class, Set<Method>>>> findSubscribers() {
+        return new HashSet<Pair<Object, Map<Class, Set<Method>>>>();
     }
 }

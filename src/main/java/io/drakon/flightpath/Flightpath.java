@@ -1,14 +1,13 @@
 package io.drakon.flightpath;
 
+import io.drakon.flightpath.dispatch.JavaDispatcher;
 import io.drakon.flightpath.lib.AnnotationLocator;
 import io.drakon.flightpath.lib.BlackholeExceptionHandler;
+import io.drakon.flightpath.lib.Pair;
 
 import javax.annotation.ParametersAreNonnullByDefault;
 import java.lang.reflect.Method;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Flightpath - an ordered event bus implementation.
@@ -16,23 +15,17 @@ import java.util.Set;
  * @author Arkan <arkan@drakon.io>
  */
 @ParametersAreNonnullByDefault
-@SuppressWarnings({"unused","unchecked"})
+@SuppressWarnings({"unused", "unchecked"})
 public class Flightpath {
 
     private final ISubscriberLocator locator;
-    // Note we *MUST* use a linked map, otherwise order is lost.
-    private final LinkedHashMap<Object, Map<Class, Set<Method>>> subscribers = new LinkedHashMap<Object,
-            Map<Class, Set<Method>>>();
-    // Anything that manipulates state *MUST* acquire this lock. It prevents awkward issues when iterating.
-    private final Object lock = new Object();
-
-    private IExceptionHandler exceptionHandler = new BlackholeExceptionHandler();
+    private IDispatcher dispatcher;
 
     /**
-     * Generates a plain old Flightpath, using the default @Airdrop annotation.
+     * Generates a plain old Flightpath, using the default @Airdrop annotation and Java dispatcher.
      */
     public Flightpath() {
-        this.locator = new AnnotationLocator(Airdrop.class);
+        this(new AnnotationLocator(Airdrop.class), new JavaDispatcher(new BlackholeExceptionHandler()));
     }
 
     /**
@@ -43,18 +36,36 @@ public class Flightpath {
      * @param locator The locator to be applied to new objects.
      */
     public Flightpath(ISubscriberLocator locator) {
-        this.locator = locator;
+        this(locator, new JavaDispatcher(new BlackholeExceptionHandler()));
     }
 
     /**
-     * Used to change exception handling behaviour.
+     * Generates a Flightpath using a different dispatcher implementation.
+     *
+     * @param dispatcher The dispatcher which handles events.
+     */
+    public Flightpath(IDispatcher dispatcher) {
+        this(new AnnotationLocator(Airdrop.class), dispatcher);
+    }
+
+    /**
+     * Generates a Flightpath with a different dispatcher and locator implementation.
+     *
+     * @param locator The locator to be applied to new objects.
+     * @param dispatcher The dispatcher which handles events.
+     */
+    public Flightpath(ISubscriberLocator locator, IDispatcher dispatcher) {
+        this.locator = locator;
+        this.dispatcher = dispatcher;
+    }
+
+    /**
+     * Used to change exception handling behaviour. This calls #setExceptionHandler on the current dispatcher.
      *
      * @param handler The handler to use.
      */
     public void setExceptionHandler(IExceptionHandler handler) {
-        synchronized (lock) {
-            this.exceptionHandler = handler;
-        }
+        dispatcher.setExceptionHandler(handler);
     }
 
     /**
@@ -63,10 +74,8 @@ public class Flightpath {
      * @param obj Object to attach to the bus.
      */
     public void register(Object obj) {
-        synchronized (lock) {
-            if (subscribers.containsKey(obj)) return; // Nothing to do.
-            subscribers.put(obj, locator.findSubscribers(obj));
-        }
+        Map<Class, Set<Method>> located = locator.findSubscribers(obj);
+        dispatcher.addSubscriber(obj, located);
     }
 
     /**
@@ -74,18 +83,11 @@ public class Flightpath {
      * on the implementation of ISubscriberLocator - it may also be a no-op.
      */
     public void registerAll() {
-        Map<Object, Map<Class, Set<Method>>> objs;
         try {
-            objs = locator.findSubscribers();
+            Set<Pair<Object, Map<Class, Set<Method>>>> objs = locator.findSubscribers();
+            dispatcher.addSubscribers((Pair<Object, Map<Class, Set<Method>>>[])objs.toArray());
         } catch (AbstractMethodError err) {
             // Older implementation of ISubscriberLocator without findSubscribers(); SKIP!
-            return;
-        }
-
-        synchronized (lock) {
-            for (Map.Entry<Object, Map<Class, Set<Method>>> ent : objs.entrySet()) {
-                subscribers.put(ent.getKey(), ent.getValue());
-            }
         }
     }
 
@@ -97,25 +99,7 @@ public class Flightpath {
      * @param evt The event to post.
      */
     public void post(Object evt) {
-        synchronized (lock) {
-            for (Map.Entry<Object, Map<Class, Set<Method>>> ent : subscribers.entrySet()) {
-                for (Map.Entry<Class, Set<Method>> objEnt: ent.getValue().entrySet()) {
-                    if (!objEnt.getKey().isAssignableFrom(evt.getClass())) continue;
-                    Set<Method> ms = objEnt.getValue();
-                    for (Method m : ms) {
-                        try {
-                            boolean access = m.isAccessible();
-                            m.setAccessible(true);
-                            m.invoke(ent.getKey(), evt);
-                            m.setAccessible(access);
-                        } catch (Exception ex) {
-                            exceptionHandler.handle(ex);
-                        }
-                    }
-                }
-            }
-            exceptionHandler.flush();
-        }
+        dispatcher.dispatch(evt);
     }
 
 }

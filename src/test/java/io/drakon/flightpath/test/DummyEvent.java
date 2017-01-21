@@ -1,4 +1,4 @@
-package io.drakon.flightpath.test.locator;
+package io.drakon.flightpath.test;
 
 /**
  * Just a placeholder class for an example event type.

@@ -1,5 +1,7 @@
 package io.drakon.flightpath;
 
+import io.drakon.flightpath.lib.Pair;
+
 import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
 import java.lang.reflect.Method;
@@ -30,6 +32,6 @@ public interface ISubscriberLocator {
      * @return A map of handlers to a map of event classes -> methods listening for them
      */
     @Nonnull
-    Map<Object, Map<Class, Set<Method>>> findSubscribers();
+    Set<Pair<Object, Map<Class, Set<Method>>>> findSubscribers();
 
 }
