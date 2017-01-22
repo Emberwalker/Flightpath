@@ -79,6 +79,20 @@ public class Flightpath {
     }
 
     /**
+     * Registers given objects onto the bus, ordered by position in the parameters.
+     *
+     * @param objs Objects to attach to the bus.
+     */
+    public void register(Object... objs) {
+        Map<Object, Pair<Object, Map<Class, Set<Method>>>> located = new HashMap<Object, Pair<Object, Map<Class, Set<Method>>>>();
+        for (Object obj : objs) {
+            Map<Class, Set<Method>> listeners = locator.findSubscribers(obj);
+            located.put(obj, new Pair<Object, Map<Class, Set<Method>>>(obj, listeners));
+        }
+        dispatcher.addSubscribers((Pair<Object, Map<Class, Set<Method>>>[])located.values().toArray());
+    }
+
+    /**
      * Requests the current locator to scan for subscribers and register all it finds. How this works is dependant
      * on the implementation of ISubscriberLocator - it may also be a no-op.
      */

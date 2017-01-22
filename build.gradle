@@ -1,7 +1,22 @@
 // Flightpath - build file
 
+buildscript {
+    repositories {
+        mavenCentral()
+        jcenter()
+        maven {
+            name = 'Forge'
+            url = 'http://files.minecraftforge.net/maven'
+        }
+    }
+    dependencies {
+        classpath 'com.github.jengelman.gradle.plugins:shadow:1.2.3'
+    }
+}
+
 repositories {
     mavenCentral()
+    jcenter()
     maven {
         name = 'Forge'
         url = 'http://files.minecraftforge.net/maven'
@@ -11,16 +26,22 @@ repositories {
 apply plugin: 'java'
 apply plugin: 'idea'
 apply plugin: 'eclipse' // I don't use it but meh, others might!
+apply plugin: 'com.github.johnrengelman.shadow'
 
 sourceCompatibility = 1.6
 group = 'io.drakon'
 version = FLIGHTPATH_VERSION
 
+configurations {
+    shade
+    compile.extendsFrom shade
+}
+
 dependencies {
     compile group: 'com.google.code.findbugs', name: 'jsr305', version: '1.3.9'
     compile group: 'net.minecraftforge', name: 'forge', version: FORGE_VERSION, classifier: 'universal'
     compile group: 'com.google.guava', name: 'guava', version: '17.0' // required for ASM data table
-    compile group: 'org.ow2.asm', name: 'asm', version: '5.2'
+    shade group: 'org.javassist', name: 'javassist', version: '3.21.0-GA'
     testCompile group: 'junit', name: 'junit', version: '4.12'
 }
 
@@ -39,6 +60,15 @@ jar {
     }
 }
 
+shadowJar {
+    classifier = "all"
+    configurations = [project.configurations.shade]
+
+    def REPACK_PACKAGE = 'io.drakon.flightpath.repack'
+
+    relocate 'javassist', "${REPACK_PACKAGE}.javassist"
+}
+
 task sourceJar(type: Jar) {
     classifier = 'sources'
     from sourceSets.main.allSource
@@ -52,6 +82,7 @@ task javadocJar(type: Jar, dependsOn: javadoc) {
 artifacts {
     archives sourceJar
     archives javadocJar
+    archives shadowJar
 }
 
 // Maven

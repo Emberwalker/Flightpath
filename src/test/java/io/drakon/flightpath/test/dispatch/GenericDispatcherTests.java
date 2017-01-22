@@ -17,6 +17,14 @@ public abstract class GenericDispatcherTests {
 
     protected abstract IDispatcher getNewDispatcher();
 
+    /*
+     * Default test listener must be public, due to the BytecodeDispatcher requiring public access.
+     * The JavaDispatcher however does not, so it overrides this to test private class access.
+     */
+    protected DispatcherTestListener getTestListener() {
+        return new DispatcherTestListener();
+    }
+
     @Test
     public void testDispatcherOnObject() throws NoSuchMethodException {
         IDispatcher dispatch = getNewDispatcher();
@@ -33,7 +41,7 @@ public abstract class GenericDispatcherTests {
         assertTrue(listener.pass);
     }
 
-    private class DispatcherTestListener {
+    public class DispatcherTestListener {
         boolean pass = false;
 
         @Airdrop

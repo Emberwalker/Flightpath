@@ -11,4 +11,11 @@ public class JavaDispatcherTests extends GenericDispatcherTests {
         return new JavaDispatcher(new BlackholeExceptionHandler());
     }
 
+    @Override
+    protected DispatcherTestListener getTestListener() {
+        return new JavaDispatcherTestListener();
+    }
+
+    private class JavaDispatcherTestListener extends DispatcherTestListener {}
+
 }
